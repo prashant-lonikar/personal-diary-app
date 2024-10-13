@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/personal-diary-app/static/css/main.6928cbe8.css",
+    "main.js": "/personal-diary-app/static/js/main.85ff1412.js",
+    "static/js/453.18ccb4ce.chunk.js": "/personal-diary-app/static/js/453.18ccb4ce.chunk.js",
+    "index.html": "/personal-diary-app/index.html",
+    "main.6928cbe8.css.map": "/personal-diary-app/static/css/main.6928cbe8.css.map",
+    "main.85ff1412.js.map": "/personal-diary-app/static/js/main.85ff1412.js.map",
+    "453.18ccb4ce.chunk.js.map": "/personal-diary-app/static/js/453.18ccb4ce.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.6928cbe8.css",
+    "static/js/main.85ff1412.js"
+  ]
+}
