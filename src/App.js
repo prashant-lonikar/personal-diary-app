@@ -5,22 +5,40 @@ import NewEntryForm from './components/NewEntryForm';
 import Login from './components/Login';
 
 function App() {
-  const [entries, setEntries] = useState([]);
+  const [entries, setEntries] = useState({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
-  const [showNewEntryForm, setShowNewEntryForm] = useState(false);
 
   useEffect(() => {
-    const storedEntries = JSON.parse(localStorage.getItem('diaryEntries')) || [];
+    const storedEntries = JSON.parse(localStorage.getItem('diaryEntries')) || {};
     setEntries(storedEntries);
   }, []);
 
   const addEntry = (newEntry) => {
-    const updatedEntries = [newEntry, ...entries];
+    const date = new Date().toLocaleDateString();
+    const time = new Date().toLocaleTimeString();
+    const updatedEntries = { ...entries };
+    if (!updatedEntries[date]) {
+      updatedEntries[date] = [];
+    }
+    updatedEntries[date].unshift({ ...newEntry, time, id: Date.now() });
     setEntries(updatedEntries);
     localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-    setShowNewEntryForm(false);
+  };
+
+  const editEntry = (date, newEntries) => {
+    const updatedEntries = { ...entries };
+    updatedEntries[date] = newEntries;
+    setEntries(updatedEntries);
+    localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+  };
+
+  const deleteEntry = (date) => {
+    const updatedEntries = { ...entries };
+    delete updatedEntries[date];
+    setEntries(updatedEntries);
+    localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
   };
 
   const handleLogin = (password) => {
@@ -50,16 +68,12 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>My Personal Diary</h1>
-        <div>
-          <button onClick={() => setShowChangePassword(!showChangePassword)}>
-            Change Password
-          </button>
-          <button onClick={() => setShowNewEntryForm(!showNewEntryForm)}>
-            {showNewEntryForm ? 'Close Form' : 'New Entry'}
-          </button>
-        </div>
+        <button onClick={() => setShowChangePassword(!showChangePassword)}>
+          Change Password
+        </button>
       </header>
       <main>
+        <NewEntryForm onAddEntry={addEntry} />
         {showChangePassword && (
           <div className="change-password">
             <input
@@ -71,9 +85,14 @@ function App() {
             <button onClick={handleChangePassword}>Save New Password</button>
           </div>
         )}
-        {showNewEntryForm && <NewEntryForm onAddEntry={addEntry} />}
-        {entries.map((entry, index) => (
-          <DiaryEntry key={index} {...entry} />
+        {Object.entries(entries).sort((a, b) => new Date(b[0]) - new Date(a[0])).map(([date, dayEntries]) => (
+          <DiaryEntry 
+            key={date}
+            date={date}
+            entries={dayEntries}
+            onEdit={(newEntries) => editEntry(date, newEntries)}
+            onDelete={() => deleteEntry(date)}
+          />
         ))}
       </main>
     </div>
