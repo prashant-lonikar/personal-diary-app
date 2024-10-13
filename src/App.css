@@ -1,160 +1,67 @@
-.App {
-  font-family: Arial, sans-serif;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  box-sizing: border-box;
+body,
+.navbar,
+.card,
+.form-control,
+.btn {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-.App-header {
-  background-color: #282c34;
-  padding: 20px;
-  color: white;
-  text-align: center;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
 }
 
-.App-header h1 {
-  margin: 0;
+.dark-mode .navbar {
+  background-color: #1e1e1e !important;
 }
 
-.diary-entry {
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 15px;
-  margin-bottom: 20px;
+.dark-mode .card {
+  background-color: #1e1e1e;
+  border-color: #2c2c2c;
 }
 
-.entry-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.dark-mode .form-control {
+  background-color: #2c2c2c;
+  border-color: #3c3c3c;
+  color: #e0e0e0;
 }
 
-.entry-header h2 {
-  color: #333;
-  font-size: 1.2em;
-  margin: 0;
+.dark-mode .form-control::placeholder {
+  color: #a0a0a0;
 }
 
-.entry-actions {
-  display: flex;
+.dark-mode .btn-outline-success {
+  color: #28a745;
+  border-color: #28a745;
 }
 
-.icon-button {
-  background: none;
-  border: none;
-  font-size: 1.2em;
-  cursor: pointer;
-  padding: 5px;
+.dark-mode .btn-outline-success:hover {
+  color: #fff;
+  background-color: #28a745;
 }
 
-.entry-item,
-.edit-entry-item {
-  border-bottom: 1px solid #eee;
-  padding-bottom: 15px;
-  margin-bottom: 15px;
+/* Ensure text is visible in both modes */
+.navbar-light .navbar-brand,
+.navbar-dark .navbar-brand,
+.navbar-light .nav-link,
+.navbar-dark .nav-link {
+  color: inherit;
 }
 
-.entry-item:last-child,
-.edit-entry-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-  margin-bottom: 0;
+/* Additional styles for better visibility */
+.dark-mode small {
+  color: #b0b0b0;
 }
 
-.entry-item small,
-.edit-entry-item small {
-  color: #666;
-  display: block;
-  margin-bottom: 5px;
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5 {
+  color: #ffffff;
 }
 
-.entry-item img,
-.edit-entry-item img {
-  max-width: 100%;
-  height: auto;
-  margin-top: 10px;
-}
-
-.edit-form {
-  margin-top: 15px;
-}
-
-.edit-form textarea {
-  width: 100%;
-  height: 100px;
-  margin-bottom: 10px;
-  padding: 5px;
-}
-
-.edit-form button {
-  margin-right: 10px;
-}
-
-form,
-.change-password {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 20px;
-}
-
-textarea,
-input[type="password"],
-input[type="file"] {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  box-sizing: border-box;
-}
-
-button {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px;
-  border: none;
-  cursor: pointer;
-  font-size: 1em;
-}
-
-button:hover {
-  background-color: #45a049;
-}
-
-.login {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-}
-
-.login form {
-  width: 100%;
-  max-width: 300px;
-}
-
-@media (max-width: 600px) {
-  .App {
-    padding: 10px;
-  }
-
-  .App-header {
-    padding: 10px;
-  }
-
-  .App-header h1 {
-    font-size: 1.5em;
-  }
-
-  .diary-entry {
-    padding: 10px;
-  }
-
-  button {
-    padding: 8px;
-  }
+/* Style for the mode switch text */
+.mode-switch-text {
+  color: inherit;
+  margin-right: 0.5rem;
 }
