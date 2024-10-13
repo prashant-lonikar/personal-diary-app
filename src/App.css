@@ -3,6 +3,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .App-header {
@@ -11,8 +12,12 @@
   color: white;
   text-align: center;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+}
+
+.App-header h1 {
+  margin-bottom: 15px;
 }
 
 .diary-entry {
@@ -25,6 +30,7 @@
 
 .diary-entry h2 {
   color: #333;
+  font-size: 1.2em;
 }
 
 .diary-entry img {
@@ -41,10 +47,17 @@ form,
 }
 
 textarea,
-input[type="password"] {
-  height: 100px;
-  margin-bottom: 10px;
+input[type="password"],
+input[type="file"] {
+  width: 100%;
   padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+textarea {
+  height: 100px;
+  resize: vertical;
 }
 
 button {
@@ -53,6 +66,7 @@ button {
   padding: 10px;
   border: none;
   cursor: pointer;
+  font-size: 1em;
 }
 
 button:hover {
@@ -68,11 +82,28 @@ button:hover {
 }
 
 .login form {
-  width: 300px;
+  width: 100%;
+  max-width: 300px;
 }
 
-.login input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
+@media (max-width: 600px) {
+  .App {
+    padding: 10px;
+  }
+
+  .App-header {
+    padding: 10px;
+  }
+
+  .App-header h1 {
+    font-size: 1.5em;
+  }
+
+  .diary-entry {
+    padding: 10px;
+  }
+
+  button {
+    padding: 8px;
+  }
 }

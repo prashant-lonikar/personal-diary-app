@@ -9,6 +9,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [showNewEntryForm, setShowNewEntryForm] = useState(false);
 
   useEffect(() => {
     const storedEntries = JSON.parse(localStorage.getItem('diaryEntries')) || [];
@@ -19,12 +20,12 @@ function App() {
     const updatedEntries = [newEntry, ...entries];
     setEntries(updatedEntries);
     localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+    setShowNewEntryForm(false);
   };
 
   const handleLogin = (password) => {
     const storedPassword = localStorage.getItem('diaryPassword');
     if (!storedPassword) {
-      // First time setup
       localStorage.setItem('diaryPassword', password);
       setIsLoggedIn(true);
     } else if (password === storedPassword) {
@@ -49,9 +50,14 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>My Personal Diary</h1>
-        <button onClick={() => setShowChangePassword(!showChangePassword)}>
-          Change Password
-        </button>
+        <div>
+          <button onClick={() => setShowChangePassword(!showChangePassword)}>
+            Change Password
+          </button>
+          <button onClick={() => setShowNewEntryForm(!showNewEntryForm)}>
+            {showNewEntryForm ? 'Close Form' : 'New Entry'}
+          </button>
+        </div>
       </header>
       <main>
         {showChangePassword && (
@@ -65,7 +71,7 @@ function App() {
             <button onClick={handleChangePassword}>Save New Password</button>
           </div>
         )}
-        <NewEntryForm onAddEntry={addEntry} />
+        {showNewEntryForm && <NewEntryForm onAddEntry={addEntry} />}
         {entries.map((entry, index) => (
           <DiaryEntry key={index} {...entry} />
         ))}
