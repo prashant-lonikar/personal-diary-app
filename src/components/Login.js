@@ -1,24 +1,43 @@
 import React, { useState } from 'react';
 
-function Login({ onLogin }) {
+function Login({ onLogin, hasPassword }) {
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onLogin(password);
+    if (hasPassword) {
+      onLogin(password);
+    } else {
+      if (password === confirmPassword) {
+        onLogin(password, true);
+      } else {
+        alert("Passwords don't match. Please try again.");
+      }
+    }
   };
 
   return (
     <div className="login">
-      <h2>Enter Password</h2>
+      <h2>{hasPassword ? 'Enter Password' : 'Create Password'}</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
+          placeholder={hasPassword ? 'Enter password' : 'Create password'}
+          required
         />
-        <button type="submit">Login</button>
+        {!hasPassword && (
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm password"
+            required
+          />
+        )}
+        <button type="submit">{hasPassword ? 'Login' : 'Create Password'}</button>
       </form>
     </div>
   );

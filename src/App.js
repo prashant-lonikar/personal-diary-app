@@ -9,11 +9,47 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [hasPassword, setHasPassword] = useState(false);
 
   useEffect(() => {
     const storedEntries = JSON.parse(localStorage.getItem('diaryEntries')) || {};
     setEntries(storedEntries);
+    const storedPassword = localStorage.getItem('diaryPassword');
+    setHasPassword(!!storedPassword);
   }, []);
+
+  const handleLogin = (password, isNewPassword = false) => {
+    if (hasPassword) {
+      // Existing password case
+      const storedPassword = localStorage.getItem('diaryPassword');
+      if (password === storedPassword) {
+        setIsLoggedIn(true);
+      } else {
+        alert('Incorrect password');
+      }
+    } else {
+      // New password case
+      if (isNewPassword) {
+        localStorage.setItem('diaryPassword', password);
+        setHasPassword(true);
+        setIsLoggedIn(true);
+      } else {
+        alert('No existing password. Please create a new one.');
+      }
+    }
+  };
+
+  const handleChangePassword = () => {
+    const oldPassword = localStorage.getItem('diaryPassword');
+    if (oldPassword === newPassword) {
+      alert('New password must be different from the current password');
+    } else {
+      localStorage.setItem('diaryPassword', newPassword);
+      setShowChangePassword(false);
+      setNewPassword('');
+      alert('Password changed successfully');
+    }
+  };
 
   const addEntry = (newEntry) => {
     const date = new Date().toLocaleDateString();
@@ -41,28 +77,10 @@ function App() {
     localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
   };
 
-  const handleLogin = (password) => {
-    const storedPassword = localStorage.getItem('diaryPassword');
-    if (!storedPassword) {
-      localStorage.setItem('diaryPassword', password);
-      setIsLoggedIn(true);
-    } else if (password === storedPassword) {
-      setIsLoggedIn(true);
-    } else {
-      alert('Incorrect password');
-    }
-  };
-
-  const handleChangePassword = () => {
-    localStorage.setItem('diaryPassword', newPassword);
-    setShowChangePassword(false);
-    setNewPassword('');
-    alert('Password changed successfully');
-  };
-
   if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />;
+    return <Login onLogin={handleLogin} hasPassword={hasPassword} />;
   }
+
 
   return (
     <div className="App">
