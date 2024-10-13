@@ -1,0 +1,38 @@
+/* Custom styles for NavbarComponent */
+.navbar {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+@media (max-width: 991px) {
+    .navbar-nav .row {
+        margin-top: 1rem;
+    }
+
+    .navbar-nav .col-12 {
+        margin-bottom: 0.5rem;
+    }
+
+    .navbar-nav .col-12:last-child {
+        margin-bottom: 0;
+    }
+
+    .navbar-nav .d-flex {
+        justify-content: space-between;
+    }
+
+    .navbar-nav .btn-link {
+        padding-left: 0;
+    }
+
+    .mode-switch-text {
+        margin-right: 0.5rem;
+    }
+}
+
+/* Ensure buttons have some padding on very small screens */
+@media (max-width: 350px) {
+    .navbar-nav .btn {
+        padding: 0.25rem 0.5rem;
+    }
+}
