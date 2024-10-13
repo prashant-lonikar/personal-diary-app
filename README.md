@@ -67,7 +67,7 @@ This app is set up for deployment on GitHub Pages. To deploy:
 - Implement tags or categories for entries
 
 ## Contributing
-Contributions, issues, and feature requests are welcome. Feel free to check [issues page](https://github.com/yourusername/your-repo-name/issues) if you want to contribute.
+Contributions, issues, and feature requests are welcome. Feel free to check [issues page](https://github.com/prashant-lonikar/personal-diary-app/issues) if you want to contribute.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
