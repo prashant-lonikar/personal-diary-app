@@ -1,7 +1,7 @@
 # Personal Diary Web App
 
 ## Description
-This is a simple, browser-based personal diary application built with React. It allows users to create, edit, and delete diary entries, including text and images, all within their web browser.
+I was getting annoyed that DayOne wouldn't let me use the diary feature on multiple devices for free so I made my own diary app. This is a simple, browser-based personal diary application built with React. It allows users to create, edit, and delete diary entries, including text and images, all within their web browser.
 
 ## Features
 - Create daily diary entries with text and images
