@@ -340,10 +340,8 @@ function Diary({ user }) {
                     ) : (
                       <>
                         <div className="prose dark:prose-invert max-w-none mb-2" dangerouslySetInnerHTML={{ __html: entry.content }} />
-                        {entry.imageUrl ? (
+                        {entry.imageUrl && (
                           <img src={entry.imageUrl} alt="Entry" className="max-w-full h-auto mb-2 rounded" />
-                        ) : (
-                          <p>No image for this entry</p>
                         )}
                         <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                           {entry.timestamp.toLocaleString()}
