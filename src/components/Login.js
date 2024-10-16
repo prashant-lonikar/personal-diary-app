@@ -1,63 +1,72 @@
 import React, { useState } from 'react';
-import { Form, Button, Card, Container } from 'react-bootstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock } from '@fortawesome/free-solid-svg-icons';
+import { signUp, login } from '../auth';
 
-function Login({ onLogin, hasPassword, darkMode }) {
+function Login() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (hasPassword) {
-      onLogin(password);
-    } else {
-      if (password === confirmPassword) {
-        onLogin(password, true);
+    try {
+      if (isSignUp) {
+        await signUp(email, password);
       } else {
-        alert("Passwords don't match. Please try again.");
+        await login(email, password);
       }
+    } catch (error) {
+      console.error("Error:", error.message);
+      alert(error.message);
     }
   };
 
   return (
-    <Container className={`d-flex align-items-center justify-content-center vh-100 ${darkMode ? 'dark-mode' : ''}`}>
-      <Card className={`shadow-lg ${darkMode ? 'bg-dark text-light' : ''}`} style={{ width: '20rem' }}>
-        <Card.Body>
-          <div className="text-center mb-4">
-            <FontAwesomeIcon icon={faLock} size="3x" className="text-primary" />
-          </div>
-          <Card.Title className="text-center mb-4">{hasPassword ? 'Enter Password' : 'Create Password'}</Card.Title>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group controlId="password">
-              <Form.Control
-                type="password"
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="px-8 py-6 mt-4 text-left bg-white shadow-lg rounded-lg">
+        <h3 className="text-2xl font-bold text-center">{isSignUp ? 'Sign Up' : 'Log In'}</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="mt-4">
+            <div>
+              <label className="block" htmlFor="email">Email</label>
+              <input 
+                type="email" 
+                placeholder="Email"
+                className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
+            </div>
+            <div className="mt-4">
+              <label className="block">Password</label>
+              <input 
+                type="password" 
+                placeholder="Password"
+                className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={hasPassword ? 'Enter password' : 'Create password'}
                 required
-                className={darkMode ? 'bg-dark text-light' : ''}
               />
-            </Form.Group>
-            {!hasPassword && (
-              <Form.Group controlId="confirmPassword" className="mt-3">
-                <Form.Control
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm password"
-                  required
-                  className={darkMode ? 'bg-dark text-light' : ''}
-                />
-              </Form.Group>
-            )}
-            <Button variant="primary" type="submit" className="w-100 mt-4">
-              {hasPassword ? 'Login' : 'Create Password'}
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
-    </Container>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <button className="px-6 py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-900" type="submit">
+                {isSignUp ? 'Sign Up' : 'Login'}
+              </button>
+              <a 
+                href="#" 
+                className="text-sm text-blue-600 hover:underline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsSignUp(!isSignUp);
+                }}
+              >
+                {isSignUp ? 'Already have an account? Log in' : 'Need an account? Sign up'}
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
