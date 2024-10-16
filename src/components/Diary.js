@@ -23,6 +23,7 @@ function Diary({ user }) {
   const { darkMode, toggleDarkMode } = useTheme();
   const [isUploading, setIsUploading] = useState(false);
   const [removeExistingImage, setRemoveExistingImage] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
   const handleImageChange = (e, isEditing = false) => {
     if (e.target.files[0]) {
@@ -34,6 +35,7 @@ function Diary({ user }) {
         setNewImage(file);
         setNewImagePreview(URL.createObjectURL(file));
       }
+      setIsImageLoading(true);
     }
   };
 
@@ -68,6 +70,7 @@ function Diary({ user }) {
       setError(err.message);
     } finally {
       setIsUploading(false);
+      setIsImageLoading(false);
     }
   };
 
@@ -240,13 +243,16 @@ function Diary({ user }) {
                   alt="Preview" 
                   className="max-w-full h-auto rounded" 
                   style={{ width: '20%', height: 'auto' }}
+                  onLoad={() => setIsImageLoading(false)}
                 />
               </div>
             )}
-            {isUploading && (
+            {(isUploading || isImageLoading) && (
               <div className="mt-4 text-center">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                <p className="mt-2">Uploading image...</p>
+                <p className="mt-2">
+                  {isUploading ? 'Uploading image...' : 'Loading image...'}
+                </p>
               </div>
             )}
           </form>
@@ -284,6 +290,7 @@ function Diary({ user }) {
                               alt="Entry" 
                               className="max-w-full h-auto rounded"
                               style={{ width: '20%', height: 'auto' }}
+                              onLoad={() => setIsImageLoading(false)}
                             />
                             <button 
                               type="button"
@@ -291,9 +298,10 @@ function Diary({ user }) {
                                 setEditImage(null);
                                 setEditImagePreview(null);
                                 setRemoveExistingImage(true);
+                                setIsImageLoading(false);
                               }}
                               className="mt-2 bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-3 rounded transition duration-300 ease-in-out"
-                              disabled={isUploading}
+                              disabled={isUploading || isImageLoading}
                             >
                               Remove Image
                             </button>
@@ -320,10 +328,12 @@ function Diary({ user }) {
                             Cancel
                           </button>
                         </div>
-                        {isUploading && (
+                        {(isUploading || isImageLoading) && (
                           <div className="mt-4 text-center">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                            <p className="mt-2">Uploading image...</p>
+                            <p className="mt-2">
+                              {isUploading ? 'Uploading image...' : 'Loading image...'}
+                            </p>
                           </div>
                         )}
                       </form>
