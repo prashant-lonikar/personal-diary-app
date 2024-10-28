@@ -4,10 +4,19 @@ import { db, storage } from '../firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import ReactQuill from 'react-quill';
+import DatePicker from 'react-datepicker';
 import 'react-quill/dist/quill.snow.css';
+import 'react-datepicker/dist/react-datepicker.css';
 import '../quill-dark.css';
 import { useTheme } from '../contexts/ThemeContext';
-import { FaMoon, FaSun, FaPaperclip, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaMoon, FaSun, FaEdit, FaTrash, FaCalendarAlt } from 'react-icons/fa';
+import NewEntryForm from './NewEntryForm';
+import { registerLocale, setDefaultLocale } from 'react-datepicker';
+import enGB from 'date-fns/locale/en-GB';
+import { format } from 'date-fns';
+
+registerLocale('en-GB', enGB);
+setDefaultLocale('en-GB');
 
 function Diary({ user }) {
   const [entries, setEntries] = useState({});
@@ -24,6 +33,20 @@ function Diary({ user }) {
   const [isUploading, setIsUploading] = useState(false);
   const [removeExistingImage, setRemoveExistingImage] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [editDate, setEditDate] = useState(null);
+
+  const getDateFromTimestamp = (timestamp) => {
+    if (timestamp instanceof Date) return timestamp;
+    if (timestamp && typeof timestamp.toDate === 'function') return timestamp.toDate();
+    if (timestamp && timestamp.seconds) return new Date(timestamp.seconds * 1000);
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') return new Date(timestamp);
+    return new Date(); // fallback to current date
+  };
+
+  const formatDate = (date) => {
+    const options = { day: '2-digit', month: 'long', year: 'numeric' };
+    return new Date(date).toLocaleDateString('en-GB', options).replace(/\s/g, '-');
+  };
 
   const handleImageChange = (e, isEditing = false) => {
     if (e.target.files[0]) {
@@ -46,72 +69,65 @@ function Diary({ user }) {
     return await getDownloadURL(storageRef);
   };
 
-  const handleAddEntry = async (e) => {
-    e.preventDefault();
-    if (newEntry.trim() === '' && !newImage) return;
-
+  const handleAddEntry = async ({ content, image, date }) => {
     try {
-      setIsUploading(true);
-      const imageUrl = await uploadImage(newImage);
-      const newEntryData = {
-        content: newEntry,
-        userId: user.uid,
-        timestamp: Timestamp.now()
-      };
-      if (imageUrl) {
-        newEntryData.imageUrl = imageUrl;
+      let imageUrl = null;
+      if (image) {
+        const storageRef = ref(storage, `images/${user.uid}/${Date.now()}_${image.name}`);
+        await uploadBytes(storageRef, image);
+        imageUrl = await getDownloadURL(storageRef);
       }
+      const newEntryData = {
+        content,
+        userId: user.uid,
+        timestamp: Timestamp.fromDate(date),
+        imageUrl
+      };
       await addDoc(collection(db, 'entries'), newEntryData);
-      setNewEntry('');
-      setNewImage(null);
-      setNewImagePreview(null);
       setError(null);
     } catch (err) {
+      console.error("Error adding document: ", err);
       setError(err.message);
-    } finally {
-      setIsUploading(false);
-      setIsImageLoading(false);
     }
   };
 
-  const handleUpdateEntry = async (id, content, currentImageUrl) => {
+  const handleUpdateEntry = async (id, content, newImage) => {
     try {
-      setIsUploading(true);
-      let imageUrl = currentImageUrl;
-      
-      if (removeExistingImage) {
-        if (currentImageUrl) {
-          const oldImageRef = ref(storage, currentImageUrl);
+      let imageUrl = null;
+      if (newImage instanceof File) {
+        // This is a new file being uploaded
+        const storageRef = ref(storage, `images/${user.uid}/${Date.now()}_${newImage.name}`);
+        await uploadBytes(storageRef, newImage);
+        imageUrl = await getDownloadURL(storageRef);
+      } else if (newImage === null) {
+        // The image was removed
+        const entry = entries[id];
+        if (entry && entry.imageUrl) {
+          const oldImageRef = ref(storage, entry.imageUrl);
           await deleteObject(oldImageRef);
         }
         imageUrl = null;
-      } else if (editImage) {
-        if (currentImageUrl) {
-          const oldImageRef = ref(storage, currentImageUrl);
-          await deleteObject(oldImageRef);
-        }
-        imageUrl = await uploadImage(editImage);
+      } else {
+        // The image wasn't changed, keep the existing URL
+        imageUrl = entries[id]?.imageUrl || null;
       }
-      
-      const updateData = { 
+
+      const updateData = {
         content,
-        timestamp: Timestamp.now()
+        timestamp: editDate ? Timestamp.fromDate(editDate) : Timestamp.now(),
+        imageUrl
       };
-      if (imageUrl !== undefined) {
-        updateData.imageUrl = imageUrl;
-      }
+
       await updateDoc(doc(db, 'entries', id), updateData);
       setEditingId(null);
       setEditImage(null);
-      setEditImagePreview(null);
-      setRemoveExistingImage(false);
+      setEditDate(null);
     } catch (err) {
+      console.error("Error updating document: ", err);
       setError(err.message);
-    } finally {
-      setIsUploading(false);
     }
   };
-    
+
   const handleDeleteEntry = async (id, imageUrl) => {
     try {
       if (imageUrl) {
@@ -132,7 +148,7 @@ function Diary({ user }) {
       orderBy('timestamp', 'desc')
     );
 
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(q,
       (snapshot) => {
         const newEntries = {};
         snapshot.docs.forEach(doc => {
@@ -140,8 +156,8 @@ function Diary({ user }) {
           const entry = {
             id: doc.id,
             ...data,
-            timestamp: data.timestamp && typeof data.timestamp.toDate === 'function' 
-              ? data.timestamp.toDate() 
+            timestamp: data.timestamp && typeof data.timestamp.toDate === 'function'
+              ? data.timestamp.toDate()
               : new Date(data.timestamp)
           };
           const dateKey = entry.timestamp.toDateString();
@@ -181,7 +197,7 @@ function Diary({ user }) {
           <button onClick={toggleDarkMode} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300">
             {darkMode ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-gray-700" />}
           </button>
-          <button 
+          <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded transition duration-300 ease-in-out"
           >
@@ -193,182 +209,116 @@ function Diary({ user }) {
       {error && <div className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-100 p-4 mb-4" role="alert">
         <p>{error}</p>
       </div>}
-      
+
       {isLoading ? (
         <div className="flex justify-center items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       ) : (
         <>
-          <form onSubmit={handleAddEntry} className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            <ReactQuill 
-              value={newEntry}
-              onChange={setNewEntry}
-              placeholder="Write a new entry..."
-              className="bg-white dark:bg-gray-700 mb-4 rounded border dark:border-gray-600"
-              modules={{
-                toolbar: [
-                  [{ 'header': [1, 2, false] }],
-                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                  [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-                  ['link', 'image'],
-                  ['clean']
-                ],
-              }}
-            />
-            <div className="flex items-center justify-between">
-              <label className="flex items-center space-x-2 cursor-pointer text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition duration-300">
-                <FaPaperclip />
-                <span>Attach Image</span>
-                <input 
-                  type='file'
-                  className="hidden"
-                  onChange={(e) => handleImageChange(e)}
-                  accept="image/*"
-                  disabled={isUploading}
-                />
-              </label>
-              <button 
-                type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition duration-300 ease-in-out"
-                disabled={isUploading}
-              >
-                {isUploading ? 'Uploading...' : 'Add Entry'}
-              </button>
-            </div>
-            {newImagePreview && (
-              <div className="mt-4">
-                <img 
-                  src={newImagePreview} 
-                  alt="Preview" 
-                  className="max-w-full h-auto rounded" 
-                  style={{ width: '20%', height: 'auto' }}
-                  onLoad={() => setIsImageLoading(false)}
-                />
-              </div>
-            )}
-            {(isUploading || isImageLoading) && (
-              <div className="mt-4 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                <p className="mt-2">
-                  {isUploading ? 'Uploading image...' : 'Loading image...'}
-                </p>
-              </div>
-            )}
-          </form>
+          <NewEntryForm onAddEntry={handleAddEntry} darkMode={darkMode} />
 
           <div className="space-y-6">
-            {Object.entries(entries).map(([date, dayEntries]) => (
-              <div key={date} className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 transition duration-300 ease-in-out">
-                <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">{date}</h3>
-                {dayEntries.map(entry => (
-                  <div key={entry.id} className="mb-4 pb-4 border-b dark:border-gray-700 last:border-b-0">
-                    {editingId === entry.id ? (
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        handleUpdateEntry(entry.id, editContent, entry.imageUrl);
-                      }}>
-                        <ReactQuill 
-                          value={editContent}
-                          onChange={setEditContent}
-                          className="bg-white dark:bg-gray-700 mb-4 rounded border dark:border-gray-600"
-                        />
-                        <input
-                          type="file"
-                          onChange={(e) => {
-                            handleImageChange(e, true);
-                            setRemoveExistingImage(false);
-                          }}
-                          accept="image/*"
-                          className="mb-4 text-gray-700 dark:text-gray-300"
-                          disabled={isUploading}
-                        />
-                        {!removeExistingImage && (editImagePreview || entry.imageUrl) && (
-                          <div className="mb-4">
-                            <img 
-                              src={editImagePreview || entry.imageUrl} 
-                              alt="Entry" 
-                              className="max-w-full h-auto rounded"
-                              style={{ width: '20%', height: 'auto' }}
-                              onLoad={() => setIsImageLoading(false)}
+            {Object.entries(entries)
+              .sort(([a], [b]) => new Date(b) - new Date(a))
+              .map(([date, dayEntries]) => (
+                <div key={date} className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 transition duration-300 ease-in-out">
+                  <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">
+                    {formatDate(new Date(date))}
+                  </h3>
+                  {dayEntries.map(entry => (
+                    <div key={entry.id} className="mb-4 pb-4 border-b dark:border-gray-700 last:border-b-0">
+                      {editingId === entry.id ? (
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          handleUpdateEntry(entry.id, editContent, editImage);
+                        }}>
+                          <div className="mb-4 flex items-center">
+                            <DatePicker
+                              selected={editDate || getDateFromTimestamp(entry.timestamp)}
+                              onChange={date => setEditDate(date)}
+                              dateFormat="dd-MMMM-yyyy"
+                              locale="en-GB"
+                              className="p-2 border rounded mr-2 dark:bg-gray-700 dark:text-white"
                             />
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                setEditImage(null);
-                                setEditImagePreview(null);
-                                setRemoveExistingImage(true);
-                                setIsImageLoading(false);
-                              }}
-                              className="mt-2 bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-3 rounded transition duration-300 ease-in-out"
-                              disabled={isUploading || isImageLoading}
-                            >
-                              Remove Image
-                            </button>
+                            <FaCalendarAlt className="text-gray-500 dark:text-gray-400" />
                           </div>
-                        )}
-                        <div className="flex space-x-2">
-                          <button 
-                            type="submit" 
-                            className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 rounded transition duration-300 ease-in-out"
-                            disabled={isUploading}
-                          >
-                            {isUploading ? 'Saving...' : 'Save'}
-                          </button>
-                          <button 
-                            onClick={() => {
+                          <ReactQuill
+                            value={editContent}
+                            onChange={setEditContent}
+                            className="bg-white dark:bg-gray-700 mb-4 rounded border dark:border-gray-600"
+                          />
+                          <input
+                            type="file"
+                            onChange={(e) => setEditImage(e.target.files[0] || null)}
+                            accept="image/*"
+                            className="mb-4 text-gray-700 dark:text-gray-300"
+                          />
+                          {(entry.imageUrl || editImage) && (
+                            <div className="relative inline-block mb-4">
+                              <img
+                                src={editImage instanceof File ? URL.createObjectURL(editImage) : (editImage || entry.imageUrl)}
+                                alt="Entry"
+                                className="max-w-full h-auto rounded"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditImage(null);
+                                  // If we're removing the original image, we need to update the entry immediately
+                                  if (!(editImage instanceof File) && entry.imageUrl) {
+                                    handleUpdateEntry(entry.id, editContent, null);
+                                  }
+                                }}
+                                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center transition duration-300 ease-in-out"
+                                title="Remove Image"
+                              >
+                                <span className="text-sm font-bold">X</span>
+                              </button>
+                            </div>
+                          )}
+                          <div className="flex space-x-2">
+                            <button type="submit" className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 rounded transition duration-300 ease-in-out">Save</button>
+                            <button onClick={() => {
                               setEditingId(null);
                               setEditImage(null);
-                              setEditImagePreview(null);
-                              setRemoveExistingImage(false);
-                            }} 
-                            className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-1 px-3 rounded transition duration-300 ease-in-out"
-                            disabled={isUploading}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                        {(isUploading || isImageLoading) && (
-                          <div className="mt-4 text-center">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                            <p className="mt-2">
-                              {isUploading ? 'Uploading image...' : 'Loading image...'}
-                            </p>
+                              setEditDate(null);
+                            }} className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-1 px-3 rounded transition duration-300 ease-in-out">Cancel</button>
                           </div>
-                        )}
-                      </form>
-                    ) : (
-                      <>
-                        <div className="prose dark:prose-invert max-w-none mb-2" dangerouslySetInnerHTML={{ __html: entry.content }} />
-                        {entry.imageUrl && (
-                          <img src={entry.imageUrl} alt="Entry" className="max-w-full h-auto mb-2 rounded" />
-                        )}
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                          {entry.timestamp.toLocaleString()}
-                        </div>
-                        <div className="flex space-x-2">
-                          <button 
-                            onClick={() => {
-                              setEditingId(entry.id);
-                              setEditContent(entry.content);
-                            }}
-                            className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition duration-300 ease-in-out"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteEntry(entry.id, entry.imageUrl)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition duration-300 ease-in-out"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ))}
+                        </form>
+                      ) : (
+                        <>
+                          <div className="prose dark:prose-invert max-w-none mb-2" dangerouslySetInnerHTML={{ __html: entry.content }} />
+                          {entry.imageUrl && (
+                            <img src={entry.imageUrl} alt="Entry" className="max-w-full h-auto mb-2 rounded" />
+                          )}
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            {formatDate(getDateFromTimestamp(entry.timestamp))} at {getDateFromTimestamp(entry.timestamp).toLocaleTimeString('en-GB')}
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingId(entry.id);
+                                setEditContent(entry.content);
+                                setEditDate(getDateFromTimestamp(entry.timestamp));
+                              }}
+                              className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition duration-300 ease-in-out"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEntry(entry.id, entry.imageUrl)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition duration-300 ease-in-out"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
           </div>
         </>
       )}
